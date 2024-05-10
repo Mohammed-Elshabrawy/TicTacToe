@@ -3,10 +3,13 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package com.mycompany.tictactoe;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
@@ -19,7 +22,7 @@ import javax.swing.JPanel;
 
 public class ticiactoe implements Runnable{
 private String ip = "localhost";
-private int port = 22222;
+private int port = 2002;
 private Scanner scanner = new Scanner(System.in);
 
 private JFrame frame;
@@ -101,10 +104,87 @@ public void run() {
 }
 }
 private void render(Graphics g) {
-}
-private void tick() {
+    g.drawImage(board, 0, 0, null);
+		if (unableToCommunicateWithOpponent) {
+		g.setColor(Color.RED);
+		g.setFont(smallerFont);
+		Graphics2D g2 = (Graphics2D) g;
+		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+		int stringWidth = g2.getFontMetrics().stringWidth(unableToCommunicateWithOpponentString);
+		g.drawString(unableToCommunicateWithOpponentString, WIDTH / 2 - stringWidth / 2, HEIGHT / 2);
+                return;
+            }                  
+    
+ if (accepted) {
+			for (int i = 0; i < spaces.length; i++) {
+				if (spaces[i] != null) {
+	if (spaces[i].equals("X")) {
+	  if (circle) {
+		g.drawImage(redX, (i % 3) * lengthOfSpace + 10 * (i % 3), (int) (i / 3) * lengthOfSpace + 10 * (int) (i / 3), null);
+			} else {
+		g.drawImage(blueX, (i % 3) * lengthOfSpace + 10 * (i % 3), (int) (i / 3) * lengthOfSpace + 10 * (int) (i / 3), null);
+			}
+		} else if (spaces[i].equals("O")) {
+	if (circle) {
+		g.drawImage(blueCircle, (i % 3) * lengthOfSpace + 10 * (i % 3), (int) (i / 3) * lengthOfSpace + 10 * (int) (i / 3), null);
+				} else {
+		g.drawImage(redCircle, (i % 3) * lengthOfSpace + 10 * (i % 3), (int) (i / 3) * lengthOfSpace + 10 * (int) (i / 3), null);
+						}
+					}
+				}
+			}
+	if (won || enemyWon) {
+		Graphics2D g2 = (Graphics2D) g;
+	        	g2.setStroke(new BasicStroke(10));
+		g.setColor(Color.BLACK);
+		g.drawLine(firstSpot % 3 * lengthOfSpace + 10 * firstSpot % 3 + lengthOfSpace / 2, (int) (firstSpot / 3) * lengthOfSpace + 10 * (int) (firstSpot / 3) + lengthOfSpace / 2, secondSpot % 3 * lengthOfSpace + 10 * secondSpot % 3 + lengthOfSpace / 2, (int) (secondSpot / 3) * lengthOfSpace + 10 * (int) (secondSpot / 3) + lengthOfSpace / 2);
+
+        	g.setColor(Color.RED);
+		g.setFont(largerFont);
+	if (won) {
+		int stringWidth = g2.getFontMetrics().stringWidth(wonString);
+		g.drawString(wonString, WIDTH / 2 - stringWidth / 2, HEIGHT / 2);
+	        	} else if (enemyWon) {
+		int stringWidth = g2.getFontMetrics().stringWidth(enemyWonString);
+			g.drawString(enemyWonString, WIDTH / 2 - stringWidth / 2, HEIGHT / 2);
+				}
+			}
+	if (tie) {
+		Graphics2D g2 = (Graphics2D) g;
+        	g.setColor(Color.BLACK);
+		g.setFont(largerFont);
+                    String tieString = null;
+		int stringWidth = g2.getFontMetrics().stringWidth(tieString);
+		g.drawString(tieString, WIDTH / 2 - stringWidth / 2, HEIGHT / 2);
+			}
+		} else {
+	g.setColor(Color.RED);
+	g.setFont(font);
+		Graphics2D g2 = (Graphics2D) g;
+		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+		int stringWidth = g2.getFontMetrics().stringWidth(waitingString);
+	g.drawString(waitingString, WIDTH / 2 - stringWidth / 2, HEIGHT / 2);
+		}
+
+	}                                        
+  private void tick()  {
     if(errors >10) unableToCommunicateWithOpponent = true;
-}
+
+if (!yourTurn && !unableToCommunicateWithOpponent) {
+			try {
+		int space = dis.readInt();
+		if (circle) spaces[space] = "X";
+		else spaces[space] = "O";
+		checkForEnemyWin();
+		checkForTie();
+		yourTurn = true;
+		} catch (IOException e) {
+		e.printStackTrace();
+		errors++;
+			}
+		}
+	}
+
 private void checkForwin() {
 }
 private void checkForEnemywin() {
@@ -142,6 +222,14 @@ private boolean connect() {
 public static void main(String[] args) {
     ticiactoe ticiactoe = new ticiactoe(); 
 }
+
+    private void checkForEnemyWin() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    private void checkForTie() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 
 private class Painter extends JPanel implements MouseListener{ 
         private static final long  serialVersionUID = 1L;
