@@ -10,6 +10,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
@@ -53,6 +54,7 @@ private boolean won = false;
 private boolean enemyWon = false;
 private boolean tie = false;
 
+
 private int lengthOfSpace = 160;
 private int errors = 0;
 private int firstSpot = -1;
@@ -66,7 +68,18 @@ private String waitingString = "Waiting for another player";
 private String unableToCommunicateWithOpponentString = "Unable to communicate with opponent.";
 private String wonString = "You won!";
 private String enemyWonString = "Opponent won!";
+private String tieString="Game ended in a tie";
+private int[][]wins=new int [][]{{0,1,2},{3,4,5},{6,7,8},{0,3,6},{1,4,7},{2,5,8},{0,4,8},{2,4,6}};
 
+/*
+    * <pre>
+
+        *0,1,2
+        *3,4,5  
+        *6,7,8  
+     * </pre>
+
+*/
 public ticiactoe() {
     System.out.println("Please input the IP: ");
     ip = scanner.nextLine();
@@ -94,14 +107,15 @@ try {
 }
 }
 public void run() {
-  while(true) {
-    tick();
-    painter.repaint();
-      
-    if(!circle & !accepted) {
-    listenForServerRequest();
-}
-}
+        while (true) {
+                tick();
+                painter.repaint();
+
+                if (!circle && !accepted) {
+                        listenForServerRequest();
+                }
+
+        }
 }
 private void render(Graphics g) {
     g.drawImage(board, 0, 0, null);
@@ -170,7 +184,7 @@ private void render(Graphics g) {
   private void tick()  {
     if(errors >10) unableToCommunicateWithOpponent = true;
 
-if (!yourTurn && !unableToCommunicateWithOpponent) {
+    if (!yourTurn && !unableToCommunicateWithOpponent) {
 			try {
 		int space = dis.readInt();
 		if (circle) spaces[space] = "X";
@@ -185,19 +199,61 @@ if (!yourTurn && !unableToCommunicateWithOpponent) {
 		}
 	}
 
-private void checkForwin() {
+private void checkForWin() {
+        for (int i = 0; i < wins.length; i++) {
+                if (circle) {
+                        if (spaces[wins[i][0]] == "O" && spaces[wins[i][1]] == "O" && spaces[wins[i][2]] == "O") {
+                                firstSpot = wins[i][0];
+                                secondSpot = wins[i][2];
+                                won = true;
+                        }
+                } else {
+                        if (spaces[wins[i][0]] == "X" && spaces[wins[i][1]] == "X" && spaces[wins[i][2]] == "X") {
+                                firstSpot = wins[i][0];
+                                secondSpot = wins[i][2];
+                                won = true;
+                        }
+                }
+        }
 }
+
 private void checkForEnemywin() {
+    for(int i=0;i<wins.length;i++) {
+        if (spaces[i]!=null){
+        if (circle) {
+            if(spaces [wins[i][0]]=="X" &&spaces [wins[i][1]]=="X" &&spaces[wins[i][2]]=="X" ){
+            firstSpot=wins[i][0];
+            secondSpot = wins[i][2];
+            enemyWon=true ;
+            
+            }
+        }else{
+           if(spaces [wins[i][0]]=="O" &&spaces [wins[i][1]]=="O"&&spaces[wins[i][2]]=="O"){
+            firstSpot=wins[i][0];
+            secondSpot = wins[i][2];
+            enemyWon=true ;
+            
+            }
+    }
+        }
+}
 }
 private void checkforTie() {
-}
+    for(int i =0;i<spaces.length;i++){
+      if(spaces[i]==null){
+          return;
+       }
+     }
+    tie =true;
+    }
+
 private void listenForServerRequest() {
 		Socket socket = null;
 		try {
 			socket = serverSocket.accept();
 			dos = new DataOutputStream(socket.getOutputStream());
 			dis = new DataInputStream(socket.getInputStream());
-                    boolean accepted = true;
+			accepted = true;
 			System.out.println("CLIENT HAS REQUESTED TO JOIN, AND WE HAVE ACCEPTED");
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -242,7 +298,35 @@ private class Painter extends JPanel implements MouseListener{
 
         @Override
         public void mouseClicked(MouseEvent e) {
-            throw new UnsupportedOperationException("Not supported yet."); 
+                if (accepted) {
+                        if (yourTurn && !unableToCommunicateWithOpponent && !won && !enemyWon) {
+                                int x = e.getX() / lengthOfSpace;
+                                int y = e.getY() / lengthOfSpace;
+                                y *= 3;
+                                int position = x + y;
+
+                                if (spaces[position] == null) {
+                                        if (!circle) spaces[position] = "X";
+                                        else spaces[position] = "O";
+                                        yourTurn = false;
+                                        repaint();
+                                        Toolkit.getDefaultToolkit().sync();
+
+                                        try {
+                                                dos.writeInt(position);
+                                                dos.flush();
+                                        } catch (IOException e1) {
+                                                errors++;
+                                                e1.printStackTrace();
+                                        }
+
+                                        System.out.println("DATA WAS SENT");
+                                        checkForWin();
+                                        checkForTie();
+
+                                }
+                        }
+                }
         }
 
         @Override
